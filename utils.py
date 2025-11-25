@@ -12,15 +12,16 @@ def init_settings(api_key):
     
     # 设置大语言模型 (LLM)
     Settings.llm = Gemini(
-        model_name="models/gemini-3.0-pro", 
+        model_name="gemini-1.5-pro",   # 修改这里
         temperature=0.1
     )
     
     # 设置嵌入模型 (Embedding)
     Settings.embedding = GeminiEmbedding(
-        model_name="models/text-embedding-004",
+        model_name="text-embedding-004",   # 修改这里
         api_key=api_key
     )
+
 
 def save_uploaded_file(uploaded_file, save_dir="./data"):
     if not os.path.exists(save_dir):
