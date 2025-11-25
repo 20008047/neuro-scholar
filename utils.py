@@ -12,7 +12,7 @@ def init_settings(api_key):
     
     # 设置大语言模型 (LLM)
     Settings.llm = Gemini(
-        model_name="models/gemini-1.5-flash", 
+        model_name="models/gemini-3.0-pro", 
         temperature=0.1
     )
     
