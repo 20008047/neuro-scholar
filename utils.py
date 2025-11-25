@@ -1,24 +1,24 @@
 import os
 import shutil
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, StorageContext, load_index_from_storage, Settings
-from llama_index.llms.gemini import Gemini
-from llama_index.embeddings.gemini import GeminiEmbedding
-import google.generativeai as genai
+from llama_index.llms.moonshot import Moonshot
+from llama_index.embeddings.moonshot import MoonshotEmbedding
+
 
 def init_settings(api_key):
-    # 配置 Google API Key
-    os.environ["GOOGLE_API_KEY"] = api_key
-    genai.configure(api_key=api_key)
-    
-    # 设置大语言模型 (LLM)
-    Settings.llm = Gemini(
-        model_name="gemini-1.5-pro",   # 修改这里
+    # 配置 Kimi (Moonshot)
+    os.environ["MOONSHOT_API_KEY"] = api_key
+
+    # 设置大语言模型
+    Settings.llm = Moonshot(
+        model="moonshot-v1-8k",
+        api_key=api_key,
         temperature=0.1
     )
-    
-    # 设置嵌入模型 (Embedding)
-    Settings.embedding = GeminiEmbedding(
-        model_name="text-embedding-004",   # 修改这里
+
+    # 设置文本嵌入模型
+    Settings.embedding = MoonshotEmbedding(
+        model="moonshot-v1-embed",
         api_key=api_key
     )
 
@@ -30,6 +30,7 @@ def save_uploaded_file(uploaded_file, save_dir="./data"):
     with open(file_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
     return file_path
+
 
 def get_index(data_dir="./data", storage_dir="./storage"):
     if not os.path.exists(storage_dir):
@@ -44,6 +45,7 @@ def get_index(data_dir="./data", storage_dir="./storage"):
         storage_context = StorageContext.from_defaults(persist_dir=storage_dir)
         index = load_index_from_storage(storage_context)
         return index
+
 
 def clear_database(data_dir="./data", storage_dir="./storage"):
     if os.path.exists(data_dir):
