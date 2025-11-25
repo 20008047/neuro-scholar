@@ -8,17 +8,19 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
 def init_settings(api_key):
     # 1. 配置 Kimi (Moonshot AI)
-    # moonshot-v1-128k 拥有超长记忆，非常适合读论文
+    # 【关键修改】：手动指定 context_window 和 关闭 function calling
+    # 这样 LlamaIndex 就不会去查白名单了，直接信任我们输入的参数
     Settings.llm = OpenAI(
         model="moonshot-v1-128k", 
         api_key=api_key, 
         api_base="https://api.moonshot.cn/v1",
-        temperature=0.3
+        temperature=0.3,
+        context_window=128000,        # <--- 手动告诉它：我有128k的记忆
+        is_function_calling_model=False # <--- 告诉它：别检查函数调用功能，防报错
     )
     
     # 2. 配置嵌入模型 (Embedding)
-    # 我们使用一个超轻量级的本地模型，无需 API Key，完全免费，且速度快
-    # 第一次运行会下载约 90MB 的模型文件
+    # 使用 HuggingFace 本地模型
     Settings.embed_model = HuggingFaceEmbedding(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
