@@ -21,8 +21,8 @@ with st.sidebar:
     st.divider()
     
     # 文件上传区
-    st.subheader("📄 上传文献 (PDF)")
-    uploaded_files = st.file_uploader("选择PDF文件", accept_multiple_files=True, type=['pdf'])
+    st.subheader("📄 上传文献 (PDF或TXT)")
+    uploaded_files = st.file_uploader("选择文献（PDF或TXT）", accept_multiple_files=True, type=['pdf','txt'])
     
     if st.button("开始处理/更新知识库"):
         if not api_key:
