@@ -1,38 +1,26 @@
 import os
 import shutil
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, StorageContext, load_index_from_storage, Settings
-from llama_index.llms.gemini import Gemini
-from llama_index.embeddings.gemini import GeminiEmbedding
-import google.generativeai as genai
+# 引入 OpenAI 库（Kimi 兼容 OpenAI 协议）
+from llama_index.llms.openai import OpenAI
+# 引入本地免费的嵌入模型
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
 def init_settings(api_key):
-    # 1. 强制配置 API Key
-    os.environ["GOOGLE_API_KEY"] = api_key
-    genai.configure(api_key=api_key)
+    # 1. 配置 Kimi (Moonshot AI)
+    # moonshot-v1-128k 拥有超长记忆，非常适合读论文
+    Settings.llm = OpenAI(
+        model="moonshot-v1-128k", 
+        api_key=api_key, 
+        api_base="https://api.moonshot.cn/v1",
+        temperature=0.3
+    )
     
-    # 2. 【修正】根据您的截图，启用 Gemini 3 Pro
-    # 我们尝试标准命名格式
-    try:
-        Settings.llm = Gemini(
-            model_name="models/gemini-3.0-pro-preview", 
-            temperature=0.1
-        )
-    except:
-        # 如果带前缀不行，尝试不带前缀，或者尝试 2.5 Pro 作为备选
-        # 但主要目标是 3.0
-        print("尝试 models/gemini-3.0-pro 失败，尝试 gemini-3.0-pro")
-        Settings.llm = Gemini(
-            model="gemini-3.0-pro", 
-            api_key=api_key,
-            temperature=0.1
-        )
-
-    # 3. 嵌入模型更新
-    # 既然有 3.0 模型，Embedding 可能也更新了，但为了稳妥我们先用通用的 text-embedding-004
-    # 如果报错，可以尝试 models/text-embedding-005 (如果有的话)
-    Settings.embedding = GeminiEmbedding(
-        model_name="models/text-embedding-004",
-        api_key=api_key
+    # 2. 配置嵌入模型 (Embedding)
+    # 我们使用一个超轻量级的本地模型，无需 API Key，完全免费，且速度快
+    # 第一次运行会下载约 90MB 的模型文件
+    Settings.embed_model = HuggingFaceEmbedding(
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
 def save_uploaded_file(uploaded_file, save_dir="./data"):
@@ -45,18 +33,21 @@ def save_uploaded_file(uploaded_file, save_dir="./data"):
 
 def get_index(data_dir="./data", storage_dir="./storage"):
     try:
-        if not os.path.exists(storage_dir):
-            if not os.path.exists(data_dir) or not os.listdir(data_dir):
-                return None
-            
-            documents = SimpleDirectoryReader(data_dir).load_data()
-            index = VectorStoreIndex.from_documents(documents)
-            index.storage_context.persist(persist_dir=storage_dir)
-            return index
-        else:
+        # 如果已有索引，直接加载
+        if os.path.exists(storage_dir):
             storage_context = StorageContext.from_defaults(persist_dir=storage_dir)
             index = load_index_from_storage(storage_context)
             return index
+            
+        # 如果没有索引，且 data 文件夹有文件，则新建
+        if not os.path.exists(data_dir) or not os.listdir(data_dir):
+            return None
+            
+        documents = SimpleDirectoryReader(data_dir).load_data()
+        index = VectorStoreIndex.from_documents(documents)
+        index.storage_context.persist(persist_dir=storage_dir)
+        return index
+            
     except Exception as e:
         print(f"Index Error: {e}")
         return None
