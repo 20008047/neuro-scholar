@@ -14,7 +14,7 @@ def init_settings(api_key):
     # 我们尝试标准命名格式
     try:
         Settings.llm = Gemini(
-            model_name="models/gemini-3.0-pro", 
+            model_name="models/gemini-3.0-pro-preview", 
             temperature=0.1
         )
     except:
