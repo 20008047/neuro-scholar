@@ -8,7 +8,7 @@ from llama_index.embeddings.gemini import GeminiEmbedding
 def init_settings(api_key):
     os.environ["GOOGLE_API_KEY"] = api_key
     # model_name 选 gemini-1.5-pro，因为它窗口大，适合读论文
-    Settings.llm = Gemini(model_name="models/gemini-1.5-pro", temperature=0.1)
+    Settings.llm = Gemini(model_name="models/gemini-1.5-flash", temperature=0.1)
     Settings.embedding = GeminiEmbedding(model_name="models/text-embedding-004")
 
 # 处理上传的文件并保存到本地临时目录
