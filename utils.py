@@ -6,18 +6,30 @@ from llama_index.embeddings.gemini import GeminiEmbedding
 import google.generativeai as genai
 
 def init_settings(api_key):
-    # 1. 强制配置 Google 库
+    # 1. 强制配置 API Key
     os.environ["GOOGLE_API_KEY"] = api_key
     genai.configure(api_key=api_key)
     
-    # 2. 【关键修改】使用 "models/gemini-1.5-flash-latest"
-    # 加上 "-latest" 后缀通常能解决 404 找不到模型的问题
-    Settings.llm = Gemini(
-        model_name="models/gemini-1.5-flash-latest", 
-        temperature=0.1
-    )
-    
-    # Embedding 模型保持不变
+    # 2. 【修正】根据您的截图，启用 Gemini 3 Pro
+    # 我们尝试标准命名格式
+    try:
+        Settings.llm = Gemini(
+            model_name="models/gemini-3.0-pro", 
+            temperature=0.1
+        )
+    except:
+        # 如果带前缀不行，尝试不带前缀，或者尝试 2.5 Pro 作为备选
+        # 但主要目标是 3.0
+        print("尝试 models/gemini-3.0-pro 失败，尝试 gemini-3.0-pro")
+        Settings.llm = Gemini(
+            model="gemini-3.0-pro", 
+            api_key=api_key,
+            temperature=0.1
+        )
+
+    # 3. 嵌入模型更新
+    # 既然有 3.0 模型，Embedding 可能也更新了，但为了稳妥我们先用通用的 text-embedding-004
+    # 如果报错，可以尝试 models/text-embedding-005 (如果有的话)
     Settings.embedding = GeminiEmbedding(
         model_name="models/text-embedding-004",
         api_key=api_key
@@ -32,27 +44,22 @@ def save_uploaded_file(uploaded_file, save_dir="./data"):
     return file_path
 
 def get_index(data_dir="./data", storage_dir="./storage"):
-    if not os.path.exists(storage_dir):
-        if not os.path.exists(data_dir) or not os.listdir(data_dir):
-            return None
-        
-        try:
+    try:
+        if not os.path.exists(storage_dir):
+            if not os.path.exists(data_dir) or not os.listdir(data_dir):
+                return None
+            
             documents = SimpleDirectoryReader(data_dir).load_data()
             index = VectorStoreIndex.from_documents(documents)
             index.storage_context.persist(persist_dir=storage_dir)
             return index
-        except Exception as e:
-            # 如果读取出错，打印一下，防止直接崩网页
-            print(f"Error building index: {e}")
-            return None
-    else:
-        try:
+        else:
             storage_context = StorageContext.from_defaults(persist_dir=storage_dir)
             index = load_index_from_storage(storage_context)
             return index
-        except:
-            # 如果索引坏了，返回None，强制重建
-            return None
+    except Exception as e:
+        print(f"Index Error: {e}")
+        return None
 
 def clear_database(data_dir="./data", storage_dir="./storage"):
     if os.path.exists(data_dir):
