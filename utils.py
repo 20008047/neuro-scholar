@@ -5,24 +5,20 @@ from llama_index.llms.gemini import Gemini
 from llama_index.embeddings.gemini import GeminiEmbedding
 import google.generativeai as genai
 
-# 初始化配置
 def init_settings(api_key):
-    # 1. 直接配置 Google 底层库，防止环境读取失败
+    # 配置 Google API Key
     os.environ["GOOGLE_API_KEY"] = api_key
     genai.configure(api_key=api_key)
     
-    # 2. 修改模型名字：去掉 "models/" 前缀，直接用 "gemini-1.5-flash"
-    # 这样可以避免双重前缀导致的 NotFound 错误
-    # 同时显式传入 api_key
+    # 设置大语言模型 (LLM)
     Settings.llm = Gemini(
-        model="gemini-1.5-flash", 
-        api_key=api_key,
+        model_name="models/gemini-1.5-flash", 
         temperature=0.1
     )
     
-    # Embedding 模型也去掉前缀
+    # 设置嵌入模型 (Embedding)
     Settings.embedding = GeminiEmbedding(
-        model_name="models/text-embedding-004", 
+        model_name="models/text-embedding-004",
         api_key=api_key
     )
 
